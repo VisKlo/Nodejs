@@ -1,4 +1,13 @@
-const fs = require('node:fs')
+import fs from 'node:fs'
+import readline from 'node:readline'
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+})
+
+rl.setPrompt("Entrez une commande >>")
+rl.prompt()
 
 const commands = [
     {
@@ -12,6 +21,10 @@ const commands = [
     {
         name: 'more <number>',
         description: "Filtre les élèves en fonction de leur moyenne"
+    },
+    {
+        name: 'add',
+        description: "Ajoute une note à un étudiant"
     }
 ]
 
@@ -43,7 +56,8 @@ fs.readFile("./exercices/challengeStudent/data/student.json", { encoding: 'utf8'
         )
 
         if (results.length > 0) {
-            console.table(results)
+            const students = results
+            return students
         } else {
             console.log("Aucun étudiant trouvé")
         }
@@ -68,25 +82,55 @@ fs.readFile("./exercices/challengeStudent/data/student.json", { encoding: 'utf8'
         }
     }
 
-    console.log("Entrez une commande")
+    rl.on("line", (line) => {
+        switch (line.toString().trim()) {
+            case commands[0].name:
+                listStudent()
+                break;
+            case line.match(/^find /) ? line : null :
+                const name = line.slice(commands[1].name.split(' ')[0].length).trim()
+                const result = findStudent(name)
+                console.table(result)
+                break;
+            case line.match(/^more /)? line : null :
+                const number = line.slice(commands[2].name.split(' ')[0].length).trim()
+                moreStudent(number)
+                break;
+            case commands[3].name :
+                rl.question("Quel est le nom de l'étudiant ? ", (name) =>{
+                    rl.question("Quel est la note à ajouté ? ", (note) => {
+                        const student = findStudent(name)
+                        if(student.length > 1){
+                            console.log("plusieurs étudiants trouvés")
+                        }
+                        else if (student.length == 0){
+                            console.log("aucun étudiant trouvé")
+                        }
+                        else{
+                            const number = Number(note)
+                            if(isNaN(number) || number < 0 || number > 20){
+                                console.log("Veuillez entrer un nombre entre 0 et 20")
+                            }
+                            else{
+                                student[0].notes.push(number)
+                                fs.writeFile("./exercices/challengeStudent/data/student.json", JSON.stringify(students, null, 2), (err) => {
+                                    if(err){
+                                        console.log(err)
+                                    }
+                                    else {
+                                        console.log(`La note ${number} a bien été ajoutée à l'étudiant ${student[0].name}.`)
+                                    }
+                                })
+                            }
+                        }
+                    })
+                })
+                
 
-    process.stdin.on("data", (chunk) => {
-
-        const text = chunk.toString().trim()
-
-        if (text === commands[0].name) {
-            listStudent()
-        }
-        else if (text.startsWith(commands[1].name.split(' ')[0])) {
-            const name = text.slice(commands[1].name.split(' ')[0].length).trim()
-            findStudent(name)
-        }
-        else if (text.startsWith(commands[2].name.split(' ')[0])) {
-            const number = text.slice(commands[2].name.split(' ')[0].length).trim()
-            moreStudent(number)
-        }
-        else {
-            console.log("Commande inconnue")
+                break
+            default:
+                console.log("Commande inconnue")
+                break
         }
     })
 
