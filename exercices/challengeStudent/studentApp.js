@@ -56,8 +56,7 @@ fs.readFile("./exercices/challengeStudent/data/student.json", { encoding: 'utf8'
         )
 
         if (results.length > 0) {
-            const students = results
-            return students
+            return results
         } else {
             console.log("Aucun étudiant trouvé")
         }
@@ -82,6 +81,37 @@ fs.readFile("./exercices/challengeStudent/data/student.json", { encoding: 'utf8'
         }
     }
 
+    function addNote(){
+        rl.question("Quel est le nom de l'étudiant ? ", (name) =>{
+            rl.question("Quel est la note à ajouté ? ", (note) => {
+                const student = findStudent(name)
+                if(student.length > 1){
+                    console.log("plusieurs étudiants trouvés")
+                }
+                else if (student.length == 0){
+                    console.log("aucun étudiant trouvé")
+                }
+                else{
+                    const number = Number(note)
+                    if(isNaN(number) || number < 0 || number > 20){
+                        console.log("Veuillez entrer un nombre entre 0 et 20")
+                    }
+                    else{
+                        student[0].notes.push(number)
+                        fs.writeFile("./exercices/challengeStudent/data/student.json", JSON.stringify(students, null, 2), (err) => {
+                            if(err){
+                                console.log(err)
+                            }
+                            else {
+                                console.log(`La note ${number} a bien été ajoutée à l'étudiant ${student[0].name}.`)
+                            }
+                        })
+                    }
+                }
+            })
+        })
+    }
+
     rl.on("line", (line) => {
         switch (line.toString().trim()) {
             case commands[0].name:
@@ -97,37 +127,8 @@ fs.readFile("./exercices/challengeStudent/data/student.json", { encoding: 'utf8'
                 moreStudent(number)
                 break;
             case commands[3].name :
-                rl.question("Quel est le nom de l'étudiant ? ", (name) =>{
-                    rl.question("Quel est la note à ajouté ? ", (note) => {
-                        const student = findStudent(name)
-                        if(student.length > 1){
-                            console.log("plusieurs étudiants trouvés")
-                        }
-                        else if (student.length == 0){
-                            console.log("aucun étudiant trouvé")
-                        }
-                        else{
-                            const number = Number(note)
-                            if(isNaN(number) || number < 0 || number > 20){
-                                console.log("Veuillez entrer un nombre entre 0 et 20")
-                            }
-                            else{
-                                student[0].notes.push(number)
-                                fs.writeFile("./exercices/challengeStudent/data/student.json", JSON.stringify(students, null, 2), (err) => {
-                                    if(err){
-                                        console.log(err)
-                                    }
-                                    else {
-                                        console.log(`La note ${number} a bien été ajoutée à l'étudiant ${student[0].name}.`)
-                                    }
-                                })
-                            }
-                        }
-                    })
-                })
-                
-
-                break
+                addNote()
+                break;
             default:
                 console.log("Commande inconnue")
                 break
