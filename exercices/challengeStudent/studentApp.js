@@ -59,6 +59,7 @@ fs.readFile("./exercices/challengeStudent/data/student.json", { encoding: 'utf8'
             return results
         } else {
             console.log("Aucun étudiant trouvé")
+            return results
         }
     }
 
