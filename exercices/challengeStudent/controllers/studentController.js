@@ -62,13 +62,13 @@ export const addMention = (name) => {
 
     let mention
 
-    if (moyenne >= 10 && moyenne < 12) {
+    if (moyenne > 10 && moyenne <= 12) {
         mention = process.env.PASSABLE
-    } else if (moyenne >= 12 && moyenne < 14) {
+    } else if (moyenne > 12 && moyenne <= 14) {
         mention = process.env.ASSEZBIEN
-    } else if (moyenne >= 14 && moyenne < 16) {
+    } else if (moyenne > 14 && moyenne <= 16) {
         mention = process.env.BIEN
-    } else if (moyenne >= 16 && moyenne <= 20) {
+    } else if (moyenne > 16) {
         mention = process.env.TRESBIEN
     } else {
         mention = "Aucune mention"
