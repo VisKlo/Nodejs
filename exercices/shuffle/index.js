@@ -1,6 +1,6 @@
 import http from "node:http"
 
-import { shuffleArray } from './utils/utils.js'
+import { shuffleArray } from './src/utils/utils.js'
 
 let users = [
     'Alan',
