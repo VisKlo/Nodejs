@@ -1,0 +1,7 @@
+mixin footerItem(path, title)
+    li: a(href=path)= title
+
+ul
+    +footerItem("#", "Mentions légales")
+    +footerItem("#", "CGU")
+    +footerItem("#", "Réclamations")

@@ -1,0 +1,11 @@
+mixin navItem(path, title, isActive)
+    - const className = isActive ? 'nav-active' : ''
+    li(class=className): a(href=path)= title
+
+mixin navList(items)
+    nav
+        ul
+        each item in items
+            +navItem(item.path, item.title, item.isActive)
+
++navList(menuItems)
