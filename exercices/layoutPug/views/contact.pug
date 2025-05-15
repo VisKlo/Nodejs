@@ -1,5 +1,13 @@
 extends ./layout/layout
 
 block content
-  .container
-    h1 Contact
+    h1 Contactez-moi
+
+    form(method="POST" action="/contact-me")
+        label(for="email") Votre email :
+        input(type="email" name="email" required)
+
+        label(for="message") Votre message :
+        textarea(name="message" required)
+
+        button(type="submit") Envoyer

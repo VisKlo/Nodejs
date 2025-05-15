@@ -1,9 +1,11 @@
-import http from "node:http";
-import dotenv from "dotenv";
-import path from "node:path";
-import pug from "pug";
+import http from "node:http"
+import dotenv from "dotenv"
+import path from "node:path"
+import pug from "pug"
+import querystring from "node:querystring"
+import fs from "node:fs"
 
-dotenv.config();
+dotenv.config()
 
 const { HOST, PORT } = process.env
 
@@ -17,18 +19,25 @@ const menuItems = [
     { path: '/contact-me', title: 'Contact', isActive: false },
 ]
 
-const server = http.createServer((req, res) => {
+const getContacts = () => {
+    return JSON.parse(fs.readFileSync("./data/contacts.json", "utf-8") || "[]")
+}
 
-    const requestedPath = req.url === "/" ? "/" : req.url;
+const saveContacts = (data) => {
+    fs.writeFileSync("./data/contacts.json", JSON.stringify(data, null, 2))
+}
+
+const server = http.createServer((req, res) => {
+    const parsedUrl = new URL(req.url, `http://${HOST}:${PORT}`)
+    const pathname = parsedUrl.pathname
+    const searchParams = parsedUrl.searchParams
 
     const updatedMenuItems = menuItems.map(item => ({
         ...item,
-        isActive: item.path === requestedPath
+        isActive: item.path === pathname
     }))
 
-    const url = req.url.replace("/", "")
-
-    if (url === "favicon.ico") {
+    if (pathname === "/favicon.ico") {
         res.writeHead(200, {
             "content-type": "image/x-icon"
         })
@@ -36,55 +45,99 @@ const server = http.createServer((req, res) => {
         return
     }
 
-    if (url === "") {
+    if (pathname === "/") {
         res.writeHead(200, {
             "content-type": "text/html"
         })
 
-        pug.renderFile(path.join(viewPath, "home.pug"), { menuItems: updatedMenuItems }, (err, data) => {
-            if (err) throw err;
+        pug.renderFile(path.join(viewPath, "home.pug"), {
+            menuItems: updatedMenuItems,
+            sent: searchParams.get("sent")
+        }, (err, data) => {
+            if (err) throw err
             res.end(data)
         })
         return
     }
 
-    if (url === "about-me") {
+    if (pathname === "/about-me") {
         res.writeHead(200, {
             "content-type": "text/html"
         })
 
         pug.renderFile(path.join(viewPath, "about.pug"), { menuItems: updatedMenuItems }, (err, data) => {
-            if (err) throw err;
+            if (err) throw err
             res.end(data)
         })
         return
     }
 
-    if (url === "references") {
+    if (pathname === "/references") {
         res.writeHead(200, {
             "content-type": "text/html"
         })
 
         pug.renderFile(path.join(viewPath, "references.pug"), { menuItems: updatedMenuItems }, (err, data) => {
-            if (err) throw err;
+            if (err) throw err
             res.end(data)
         })
         return
     }
 
-    if (url === "contact-me") {
-        res.writeHead(200, {
-            "content-type": "text/html"
-        })
+    if (pathname === "/contact-me") {
+        if (req.method === "GET") {
+            res.writeHead(200, {
+                "content-type": "text/html"
+            })
 
-        pug.renderFile(path.join(viewPath, "contact.pug"), { menuItems: updatedMenuItems }, (err, data) => {
-            if (err) throw err;
-            res.end(data)
-        })
-        return
+            pug.renderFile(path.join(viewPath, "contact.pug"), { menuItems: updatedMenuItems }, (err, data) => {
+                if (err) throw err
+                res.end(data)
+            })
+            return
+        }
+
+        if (req.method === "POST") {
+            let body = ""
+
+            req.on("data", chunk => {
+                body += chunk.toString()
+            }).on("end", () => {
+                const data = querystring.parse(body)
+
+                if (!data.email || !data.message || data.email.trim() === "" || data.message.trim() === "") {
+                    res.writeHead(500, { "content-type": "text/html" })
+                    pug.renderFile(
+                        path.join(viewPath, "contact.pug"),
+                        {
+                            menuItems: updatedMenuItems,
+                            error: "Merci de remplir tous les champs."
+                        },
+                        (err, data) => {
+                            if (err) throw err
+                            res.end(data)
+                        }
+                    )
+                    return
+                }
+
+                const contacts = getContacts()
+                contacts.push({ email: data.email, message: data.message, date: new Date() })
+                saveContacts(contacts)
+
+                res.writeHead(302, {
+                    Location: "/?sent=1"
+                })
+                res.end()
+            })
+            return
+        }
     }
+
+    res.writeHead(404, { "content-type": "text/plain" })
+    res.end("Page non trouvée")
 })
 
 server.listen(PORT, HOST, () => {
-    console.log("running")
+    console.log(`Server running at http://${HOST}:${PORT}`)
 })
